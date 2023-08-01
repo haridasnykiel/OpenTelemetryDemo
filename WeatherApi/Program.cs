@@ -1,3 +1,4 @@
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using WeatherApi;
@@ -18,7 +19,19 @@ builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(DiagnosticsConfig.ServiceName))
             .AddAspNetCoreInstrumentation()
-            .AddConsoleExporter());
+            .AddConsoleExporter()
+            .AddOtlpExporter())
+    // .WithMetrics(metricsProviderBuilder =>
+    //     metricsProviderBuilder
+    //         .ConfigureResource(resource => resource
+    //             .AddService(DiagnosticsConfig.ServiceName))
+    //         .AddAspNetCoreInstrumentation()
+    //         .AddConsoleExporter())
+    .WithMetrics(metricsBuilder => 
+        metricsBuilder
+            .AddMeter(DiagnosticsConfig.Meter.Name)
+            .AddConsoleExporter()
+            .AddOtlpExporter());
 
 var app = builder.Build();
 
