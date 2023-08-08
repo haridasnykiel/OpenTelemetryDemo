@@ -13,25 +13,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddOpenTelemetry()
-    .WithTracing(tracerProviderBuilder =>
-        tracerProviderBuilder
-            .AddSource(DiagnosticsConfig.ActivitySource.Name)
-            .ConfigureResource(resource => resource
-                .AddService(DiagnosticsConfig.ServiceName))
-            .AddAspNetCoreInstrumentation()
-            .AddConsoleExporter()
-            .AddOtlpExporter())
-    // .WithMetrics(metricsProviderBuilder =>
-    //     metricsProviderBuilder
+    // .WithTracing(tracerProviderBuilder =>
+    //     tracerProviderBuilder
+    //         .AddSource(DiagnosticsConfig.ActivitySource.Name)
     //         .ConfigureResource(resource => resource
     //             .AddService(DiagnosticsConfig.ServiceName))
     //         .AddAspNetCoreInstrumentation()
-    //         .AddConsoleExporter())
+    //         .AddOtlpExporter())
     .WithMetrics(metricsBuilder => 
         metricsBuilder
             .AddMeter(DiagnosticsConfig.Meter.Name)
             .AddConsoleExporter()
-            .AddOtlpExporter());
+            .AddOtlpExporter()
+            .AddPrometheusExporter());
 
 var app = builder.Build();
 
@@ -43,6 +37,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseAuthorization();
 

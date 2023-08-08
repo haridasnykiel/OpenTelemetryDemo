@@ -6,6 +6,9 @@ receivers:
 exporters:
   logging:
     loglevel: debug
+  prometheus:
+    endpoint: collector:5555
+    namespace: default
 processors:
   batch:
 service:
@@ -16,5 +19,5 @@ service:
       processors: [batch]
     metrics:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [logging, prometheus]
       processors: [batch]
