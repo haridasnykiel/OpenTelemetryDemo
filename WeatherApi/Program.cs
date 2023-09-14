@@ -1,3 +1,4 @@
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -12,20 +13,30 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddLogging( logger => {
+    logger.AddOpenTelemetry(o => {
+        o.AddConsoleExporter()
+        .AddOtlpExporter();
+    });
+});
+
 builder.Services.AddOpenTelemetry()
-    // .WithTracing(tracerProviderBuilder =>
-    //     tracerProviderBuilder
-    //         .AddSource(DiagnosticsConfig.ActivitySource.Name)
-    //         .ConfigureResource(resource => resource
-    //             .AddService(DiagnosticsConfig.ServiceName))
-    //         .AddAspNetCoreInstrumentation()
-    //         .AddOtlpExporter())
-    .WithMetrics(metricsBuilder => 
-        metricsBuilder
-            .AddMeter(DiagnosticsConfig.Meter.Name)
-            .AddConsoleExporter()
+    .WithTracing(tracerProviderBuilder =>
+        tracerProviderBuilder
+            .AddSource(DiagnosticsConfig.ActivitySource.Name)
+            .ConfigureResource(resource => resource
+                .AddService(DiagnosticsConfig.ServiceName))
+            .AddAspNetCoreInstrumentation()
             .AddOtlpExporter()
-            .AddPrometheusExporter());
+            .AddConsoleExporter());
+    // .WithMetrics(metricsBuilder => 
+    //     metricsBuilder
+    //         .AddMeter(DiagnosticsConfig.Meter.Name)
+    //         .ConfigureResource(resource => resource
+    //              .AddService(DiagnosticsConfig.ServiceName))
+    //         .AddConsoleExporter()
+    //         .AddOtlpExporter()
+    //         .AddPrometheusExporter());
 
 var app = builder.Build();
 
@@ -38,7 +49,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
+//app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseAuthorization();
 
