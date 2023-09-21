@@ -13,12 +13,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddLogging( logger => {
-    logger.AddOpenTelemetry(o => {
-        o.AddConsoleExporter()
-        .AddOtlpExporter();
-    });
-});
+// builder.Services.AddLogging( logger => {
+//     logger.AddOpenTelemetry(o => {
+//         o.AddConsoleExporter()
+//         .AddOtlpExporter();
+//     });
+// });
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
@@ -27,6 +27,7 @@ builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(DiagnosticsConfig.ServiceName))
             .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
             .AddOtlpExporter()
             .AddConsoleExporter());
     // .WithMetrics(metricsBuilder => 

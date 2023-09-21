@@ -1,5 +1,10 @@
 
 services:
+  database: 
+    build: ./WeatherApi.Database/WeatherApi.Database
+    ports:
+      - 1433:1433
+
   collector:
     image: otel/opentelemetry-collector:latest
     command: ["--config", "/etc/otel-collector-config.yaml"]
@@ -9,9 +14,9 @@ services:
     volumes:
       - ./build/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./build/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  # prometheus:
+  #   image: prom/prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./build/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
