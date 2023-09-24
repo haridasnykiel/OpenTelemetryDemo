@@ -22,22 +22,25 @@ public class WeatherForecastController : ControllerBase
     public IEnumerable<WeatherForecast> Get()
     {
 
-        using var activity = DiagnosticsConfig.ActivitySource.StartActivity("SayHello");
-        activity?.SetTag("foo", 1);
-        activity?.SetTag("bar", "Hello, World!");
-        activity?.SetTag("baz", new int[] { 1, 2, 3 });
+        using var activity = DiagnosticsConfig.ActivitySource.StartActivity("Get Weather Forecasts");
 
 
-        DiagnosticsConfig.RequestCounter.Add(1,
-            new("Action", "GetWeatherForecast"),
-            new("Controller", nameof(WeatherForecastController)));
+        // DiagnosticsConfig.RequestCounter.Add(1,
+        //     new("Action", "GetWeatherForecast"),
+        //     new("Controller", nameof(WeatherForecastController)));
 
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         })
         .ToArray();
+
+        // create a constants class to include all the keys.
+        activity?.SetTag("forecasts.count", forecasts.Length);
+        activity?.SetTag("forecasts.first", forecasts[0].Summary);
+
+        return forecasts;
     }
 }

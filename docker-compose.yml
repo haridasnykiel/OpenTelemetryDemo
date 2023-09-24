@@ -1,9 +1,9 @@
 
 services:
-  database: 
-    build: ./WeatherApi.Database/WeatherApi.Database
+  redis:
+    image: redis:latest
     ports:
-      - 1433:1433
+      - "6379:6379"
 
   collector:
     image: otel/opentelemetry-collector:latest
