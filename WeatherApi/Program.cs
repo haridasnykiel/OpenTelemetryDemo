@@ -1,24 +1,23 @@
+using Microsoft.AspNetCore.Components.Forms;
+using Name;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using WeatherApi;
+using WeatherApi.Clients;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// builder.Services.AddLogging( logger => {
-//     logger.AddOpenTelemetry(o => {
-//         o.AddConsoleExporter()
-//         .AddOtlpExporter();
-//     });
-// });
+var redisClient = new RedisClient("localhost:6379");
+builder.Services.AddSingleton<IRedisClient>(redisClient);
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
@@ -30,18 +29,9 @@ builder.Services.AddOpenTelemetry()
             .AddHttpClientInstrumentation()
             .AddOtlpExporter()
             .AddConsoleExporter());
-    // .WithMetrics(metricsBuilder => 
-    //     metricsBuilder
-    //         .AddMeter(DiagnosticsConfig.Meter.Name)
-    //         .ConfigureResource(resource => resource
-    //              .AddService(DiagnosticsConfig.ServiceName))
-    //         .AddConsoleExporter()
-    //         .AddOtlpExporter()
-    //         .AddPrometheusExporter());
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

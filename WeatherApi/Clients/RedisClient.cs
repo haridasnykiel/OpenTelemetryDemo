@@ -1,8 +1,9 @@
+using Name;
 using StackExchange.Redis;
 
 namespace WeatherApi.Clients;
 
-class RedisClient
+public class RedisClient : IRedisClient
 {
     private static ConnectionMultiplexer _connectionMultiplexer;
     public RedisClient(string redisHost)
@@ -13,7 +14,7 @@ class RedisClient
         }  
     }
 
-    public static IDatabase GetDatabase()
+    public IDatabase GetDatabase()
     {
         return _connectionMultiplexer.GetDatabase();
     }
@@ -23,7 +24,10 @@ class RedisClient
         return database.StringSet(key, value);
     }
 
-    public string Get(IDatabase database, string key) {
-        return database.StringGet(key).HasValue ? database.StringGet(key).ToString() : null;
+    public string? Get(IDatabase database, string key) 
+    {
+        var value = database.StringGet(key);
+        
+        return value.HasValue ? value.ToString() : null;
     }
 }

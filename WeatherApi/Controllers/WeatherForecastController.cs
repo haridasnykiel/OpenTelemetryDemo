@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Name;
 
 namespace WeatherApi.Controllers;
 
@@ -6,41 +8,65 @@ namespace WeatherApi.Controllers;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+    IRedisClient redisClient;
 
-    private readonly ILogger<WeatherForecastController> _logger;
-
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(IRedisClient redisClient)
     {
-        _logger = logger;
+        this.redisClient = redisClient;
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    [HttpGet(Name = "GetWeather")]
+    public IActionResult Get([FromQuery] List<DateOnly> Dates)
     {
 
         using var activity = DiagnosticsConfig.ActivitySource.StartActivity("Get Weather Forecasts");
 
+        var redisDatabase = redisClient.GetDatabase();
 
-        // DiagnosticsConfig.RequestCounter.Add(1,
-        //     new("Action", "GetWeatherForecast"),
-        //     new("Controller", nameof(WeatherForecastController)));
+        var forecasts = Dates.Select(date => {
 
-        var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            var key = date.ToString();
+            var result = redisClient.Get(redisDatabase, date.ToString());
+            
+            if(result is null) 
+            {
+                activity?.SetTag("forecasts.date.notfound", date.ToString());
+                return null;
+            }
+            
+            return JsonSerializer.Deserialize<WeatherForecast>(result);
         })
         .ToArray();
 
         // create a constants class to include all the keys.
-        activity?.SetTag("forecasts.count", forecasts.Length);
-        activity?.SetTag("forecasts.first", forecasts[0].Summary);
+        activity?.SetTag("forecasts.found.count", forecasts.Count(f => f != null));
 
-        return forecasts;
+        return Ok(forecasts);
     }
+
+    [HttpPost(Name = "PostWeather")]
+    public void Post(IEnumerable<WeatherForecast> weatherForecasts) 
+    {
+        using var activity = DiagnosticsConfig.ActivitySource.StartActivity("Post Weather Forecasts");
+
+        var validForecasts = weatherForecasts.Where(w => w.Date > DateOnly.FromDateTime(DateTime.UtcNow));
+
+        var redisDatabase = redisClient.GetDatabase();
+
+        foreach (var forecast in validForecasts)
+        {
+            var hasSet = redisClient.Set(redisDatabase, forecast.Date.ToString(), JsonSerializer.Serialize(forecast));
+
+            var message = $"{forecast.Date} -> {forecast.Summary} {forecast.TemperatureC}c";
+            
+            if(hasSet)
+            {
+                activity?.SetTag("forecast.added", message);
+            }
+            else 
+            {
+                activity?.SetTag("forecast.added.failed", message);
+            }
+        }
+    }   
 }
