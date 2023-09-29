@@ -1,6 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Name;
+using WeatherApi.Services;
 
 namespace WeatherApi.Controllers;
 
@@ -8,37 +7,21 @@ namespace WeatherApi.Controllers;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-    IRedisClient redisClient;
+    IWeatherForecastService service;
 
-    public WeatherForecastController(IRedisClient redisClient)
+    public WeatherForecastController(IWeatherForecastService service)
     {
-        this.redisClient = redisClient;
+        this.service = service;
     }
 
     [HttpGet(Name = "GetWeather")]
-    public IActionResult Get([FromQuery] List<DateOnly> Dates)
+    public IActionResult Get([FromQuery] List<DateOnly> dates)
     {
 
         using var activity = DiagnosticsConfig.ActivitySource.StartActivity("Get Weather Forecasts");
 
-        var redisDatabase = redisClient.GetDatabase();
+        var forecasts = service.GetForecasts(dates);
 
-        var forecasts = Dates.Select(date => {
-
-            var key = date.ToString();
-            var result = redisClient.Get(redisDatabase, date.ToString());
-            
-            if(result is null) 
-            {
-                activity?.SetTag("forecasts.date.notfound", date.ToString());
-                return null;
-            }
-            
-            return JsonSerializer.Deserialize<WeatherForecast>(result);
-        })
-        .ToArray();
-
-        // create a constants class to include all the keys.
         activity?.SetTag("forecasts.found.count", forecasts.Count(f => f != null));
 
         return Ok(forecasts);
@@ -51,22 +34,6 @@ public class WeatherForecastController : ControllerBase
 
         var validForecasts = weatherForecasts.Where(w => w.Date > DateOnly.FromDateTime(DateTime.UtcNow));
 
-        var redisDatabase = redisClient.GetDatabase();
-
-        foreach (var forecast in validForecasts)
-        {
-            var hasSet = redisClient.Set(redisDatabase, forecast.Date.ToString(), JsonSerializer.Serialize(forecast));
-
-            var message = $"{forecast.Date} -> {forecast.Summary} {forecast.TemperatureC}c";
-            
-            if(hasSet)
-            {
-                activity?.SetTag("forecast.added", message);
-            }
-            else 
-            {
-                activity?.SetTag("forecast.added.failed", message);
-            }
-        }
+        service.AddForecasts(weatherForecasts);
     }   
 }

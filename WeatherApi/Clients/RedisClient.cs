@@ -1,4 +1,3 @@
-using Name;
 using StackExchange.Redis;
 
 namespace WeatherApi.Clients;

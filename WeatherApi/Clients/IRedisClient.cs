@@ -1,6 +1,6 @@
 using StackExchange.Redis;
 
-namespace Name;
+namespace WeatherApi.Clients;
 
 public interface IRedisClient
 {

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Components.Forms;
-using Name;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using WeatherApi;
 using WeatherApi.Clients;
+using WeatherApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +19,8 @@ builder.Services.AddSwaggerGen();
 var redisClient = new RedisClient("localhost:6379");
 builder.Services.AddSingleton<IRedisClient>(redisClient);
 
+builder.Services.AddScoped<IWeatherForecastService, WeatherForecastService>();
+
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
         tracerProviderBuilder
@@ -26,7 +28,6 @@ builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(DiagnosticsConfig.ServiceName))
             .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
             .AddOtlpExporter()
             .AddConsoleExporter());
 
@@ -39,8 +40,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-//app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseAuthorization();
 
