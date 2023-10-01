@@ -13,20 +13,41 @@ public class RedisClient : IRedisClient
         }  
     }
 
-    public IDatabase GetDatabase()
-    {
-        return _connectionMultiplexer.GetDatabase();
-    }
+    public IDatabase GetDatabase() => _connectionMultiplexer.GetDatabase();
 
     public bool Set(IDatabase database, string key, string value)
     {
-        return database.StringSet(key, value);
+        try 
+        {
+            return database.StringSet(key, value);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+        
     }
 
     public string? Get(IDatabase database, string key) 
     {
-        var value = database.StringGet(key);
+        try 
+        {
+            var value = database.StringGet(key);
+            
+            if(!value.HasValue)
+            {
+                Console.WriteLine("Value not found");
+            }
         
-        return value.HasValue ? value.ToString() : null;
+            return value.HasValue ? value.ToString() : null;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return string.Empty;
+        }
+
+        
     }
 }

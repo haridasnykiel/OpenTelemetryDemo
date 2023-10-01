@@ -2,6 +2,6 @@ namespace WeatherApi.Services;
 
 public interface IWeatherForecastService
 {
-    WeatherForecast?[] GetForecasts(List<DateOnly> datesRequested);
-    void AddForecasts(IEnumerable<WeatherForecast> weatherForecasts);
+    IList<WeatherForecast> GetForecasts(IList<DateOnly> datesRequested);
+    bool AddForecasts(IList<WeatherForecast> weatherForecasts);
 }

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using WeatherApi.Clients;
 
@@ -13,53 +14,56 @@ public class WeatherForecastService : IWeatherForecastService
         this.redisClient = redisClient;
     }
 
-    public WeatherForecast?[] GetForecasts(List<DateOnly> datesRequested)
+    public IList<WeatherForecast> GetForecasts(IList<DateOnly> datesRequested)
     {
         var activity = Activity.Current;
         var redisDatabase = redisClient.GetDatabase();
+        var results = new List<WeatherForecast>();
 
-        return datesRequested.Select(date => 
+        var datesNotFound = new StringBuilder();
+
+        foreach (var date in datesRequested)
         {
-
             var key = date.ToString();
-            var result = redisClient.Get(redisDatabase, date.ToString());
+            var result = redisClient.Get(redisDatabase, key);
             
             if(result is null)
             {
-                activity?.SetTag("forecasts.date.notfound", date.ToString());
-                return null;
+                datesNotFound.Append(date + ",");
+                activity?.SetTag("forecasts.dates.notfound", datesNotFound.ToString());
+                continue;
             }
-            
-            return JsonSerializer.Deserialize<WeatherForecast>(result);
-        }).ToArray();
+
+            results.Add(JsonSerializer.Deserialize<WeatherForecast>(result));
+        }
+
+        return results;
     }
 
-    public void AddForecasts(IEnumerable<WeatherForecast> weatherForecasts) 
+    public bool AddForecasts(IList<WeatherForecast> weatherForecasts) 
     {
         var activity = Activity.Current;
 
         var redisDatabase = redisClient.GetDatabase();
+        var datesNotSet = new StringBuilder();
 
-        if(weatherForecasts?.Count() <= 0)
-        {
-            activity?.SetTag("forecasts.invalid", "Ensure the dates for forecasts are in the future");
-            return;
-        }
-
+        bool hasSetAllValues = true;
+        
         foreach (var forecast in weatherForecasts)
         {
             var hasSet = redisClient.Set(redisDatabase, forecast.Date.ToString(), JsonSerializer.Serialize(forecast));
 
-            var message = $"{forecast.Date} -> {forecast.Summary} {forecast.TemperatureC}c";
+            Thread.Sleep(1000);
             
-            if(hasSet)
+            if(!hasSet)
             {
-                activity?.SetTag("forecast.added", message);
+                var message = $"{forecast.Date} -> {forecast.Summary} {forecast.TemperatureC}c";
+                datesNotSet.AppendLine(message);
+                activity?.SetTag("forecast.added.failed", datesNotSet.ToString());
+                hasSetAllValues = false;
             }
-            else 
-            {
-                activity?.SetTag("forecast.added.failed", message);
-            }
-        } 
+        }
+
+        return hasSetAllValues;
     }
 }
