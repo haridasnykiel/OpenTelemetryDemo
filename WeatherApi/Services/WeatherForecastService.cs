@@ -16,7 +16,6 @@ public class WeatherForecastService : IWeatherForecastService
 
     public IList<WeatherForecast> GetForecasts(IList<DateOnly> datesRequested)
     {
-        var activity = Activity.Current;
         var redisDatabase = redisClient.GetDatabase();
         var results = new List<WeatherForecast>();
 
@@ -30,7 +29,6 @@ public class WeatherForecastService : IWeatherForecastService
             if(result is null)
             {
                 datesNotFound.Append(date + ",");
-                activity?.SetTag("forecasts.dates.notfound", datesNotFound.ToString());
                 continue;
             }
 
@@ -42,24 +40,21 @@ public class WeatherForecastService : IWeatherForecastService
 
     public bool AddForecasts(IList<WeatherForecast> weatherForecasts) 
     {
-        var activity = Activity.Current;
-
         var redisDatabase = redisClient.GetDatabase();
-        var datesNotSet = new StringBuilder();
 
         bool hasSetAllValues = true;
         
         foreach (var forecast in weatherForecasts)
         {
-            var hasSet = redisClient.Set(redisDatabase, forecast.Date.ToString(), JsonSerializer.Serialize(forecast));
+            var hasSet = redisClient.Set(
+                redisDatabase,
+                forecast.Date.ToString(),
+                JsonSerializer.Serialize(forecast));
 
-            Thread.Sleep(1000);
+            Thread.Sleep(400);
             
             if(!hasSet)
             {
-                var message = $"{forecast.Date} -> {forecast.Summary} {forecast.TemperatureC}c";
-                datesNotSet.AppendLine(message);
-                activity?.SetTag("forecast.added.failed", datesNotSet.ToString());
                 hasSetAllValues = false;
             }
         }
