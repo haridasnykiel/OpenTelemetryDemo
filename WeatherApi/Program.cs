@@ -21,15 +21,6 @@ builder.Services.AddSingleton<IRedisClient>(redisClient);
 
 builder.Services.AddScoped<IWeatherForecastService, WeatherForecastService>();
 
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracerProviderBuilder =>
-        tracerProviderBuilder
-            .AddSource(DiagnosticsConfig.ActivitySource.Name)
-            .ConfigureResource(resource => resource
-                .AddService(DiagnosticsConfig.ServiceName))
-            .AddAspNetCoreInstrumentation()
-            .AddOtlpExporter()
-            .AddConsoleExporter());
 
 var app = builder.Build();
 
