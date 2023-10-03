@@ -25,6 +25,7 @@ public class RedisClient : IRedisClient
         }
         catch(Exception ex)
         {
+            Console.WriteLine(ex.Message);
             return false;
         }
         
@@ -40,6 +41,7 @@ public class RedisClient : IRedisClient
         }
         catch(Exception ex)
         {
+            Console.WriteLine(ex.Message);
             return string.Empty;
         }
 
