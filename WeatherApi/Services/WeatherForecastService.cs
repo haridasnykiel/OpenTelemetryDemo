@@ -32,7 +32,11 @@ public class WeatherForecastService : IWeatherForecastService
                 continue;
             }
 
-            results.Add(JsonSerializer.Deserialize<WeatherForecast>(result));
+            var value = JsonSerializer.Deserialize<WeatherForecast>(result);
+
+            if(value is null) continue;
+
+            results.Add(value);
         }
 
         return results;
@@ -50,8 +54,6 @@ public class WeatherForecastService : IWeatherForecastService
                 redisDatabase,
                 forecast.Date.ToString(),
                 JsonSerializer.Serialize(forecast));
-
-            Thread.Sleep(400);
             
             if(!hasSet)
             {

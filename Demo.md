@@ -143,8 +143,8 @@ activity?.AddEvent(new ActivityEvent(
 
 ```c#
 var activity = Activity.Current;
-activity.SetStatus(ActivityStatusCode.Error);
-activity.RecordException(ex, new TagList {
+activity?.SetStatus(ActivityStatusCode.Error);
+activity?.RecordException(ex, new TagList {
     {"key", key}
 });
 ```

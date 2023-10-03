@@ -34,7 +34,7 @@ public class WeatherForecastController : ControllerBase
         .Where(w => w.Date > DateOnly.FromDateTime(DateTime.UtcNow))
         .ToList();
 
-        if(validForecasts?.Count() <= 0)
+        if(validForecasts.Count <= 0)
         {
             return BadRequest();
         }

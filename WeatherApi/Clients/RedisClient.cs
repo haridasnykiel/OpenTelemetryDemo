@@ -6,7 +6,7 @@ namespace WeatherApi.Clients;
 
 public class RedisClient : IRedisClient
 {
-    private static ConnectionMultiplexer _connectionMultiplexer;
+    private static ConnectionMultiplexer? _connectionMultiplexer;
     public RedisClient(string redisHost)
     {
         if(_connectionMultiplexer == null) 
@@ -15,7 +15,7 @@ public class RedisClient : IRedisClient
         }  
     }
 
-    public IDatabase GetDatabase() => _connectionMultiplexer.GetDatabase();
+    public IDatabase GetDatabase() => _connectionMultiplexer?.GetDatabase() ?? throw new Exception();
 
     public bool Set(IDatabase database, string key, string value)
     {
